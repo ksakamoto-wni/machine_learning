@@ -1,15 +1,11 @@
 
 
 ```python
-%matplotlib inline
-
-#-- Training, Testingのファイルを別に用意する代わりにCross Validationを行う
-
+# Grid Search Test
+#
 import numpy as np 
 import pandas as pd
 from sklearn.neural_network import MLPRegressor
-#from sklearn.model_selection import cross_val_score
-#from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import GridSearchCV
 import sys
 import os.path
@@ -19,14 +15,15 @@ from sklearn.externals import joblib
 def main():
 
 #    args = sys.argv
-
+#
 #    if len(args) != 3:
 #        print "usage: %s [Feature CSV] [Target CSV]" % (args[0])
 #        sys.exit()
-
+#
 #    csv_feature = args[1]
 #    csv_target = args[2]
 
+    #-- Input Files
     csv_feature = "./probe_HANEDA.2017.txt"
     csv_target = "./probe_TATENO.2017.txt"
 
@@ -39,10 +36,6 @@ def main():
     #-- Reading Feature
     data = pd.read_csv(csv_feature, delim_whitespace=True)
     X_all = data.loc[:, ['TEMP','U','V']]
-#    X_TIME = data.loc[:, 'TIME'] * 0.01
-#    X_all['TIME'] = X_TIME
-    
-#    X_all = data.loc[:, ['TEMP','U','V']].as_matrix()
     print "X_all= %d, %d" % (X_all.shape[0], X_all.shape[1])
 
     #-- Reading Target
@@ -50,26 +43,7 @@ def main():
     Y_all = data2.loc[:,'TEMP'].as_matrix()
     print "Y_all= %d" % (Y_all.shape[0])
 
-        # Model
-   # clf = MLPRegressor(solver="adam",random_state=0,max_iter=10000)
-   # clf = MLPRegressor(hidden_layer_sizes=(100,100),activation='relu',solver="sgd",random_state=0,max_iter=10000)
-#    clf = MLPRegressor(hidden_layer_sizes=(100,2),activation='relu',solver="adam",random_state=0,max_iter=50000)
-   # clf = MLPRegressor(solver="adam",activation="tanh",random_state=0,max_iter=10000)
-   # clf = MLPRegressor(solver="adam",learning_rate_init=0.0005,random_state=0,max_iter=10000)
-
-#    scores = cross_val_score(clf, X_all, Y_all, cv=5)
-#    print scores
-#    print "mean="+np.mean(scores)
-
-#    clf.fit(X_all, Y_all)
-#    Y_pred = clf.predict(X_all)
-
-#    scores = cross_val_score(clf, X_all, Y_all, cv=5)
-#    print scores
-
-#    tuned_param = { 'activation': [‘identity’,‘logistic’] }
-#    tuned_param = { 'hidden_layer_sizes':[1,2,3], 'activation': [‘relu’] }
-
+    #-- Model
     clf = GridSearchCV(
         MLPRegressor(hidden_layer_sizes=(100,),activation='relu',solver="adam",random_state=0,max_iter=20000),
         param_grid=[{'hidden_layer_sizes':[(4,),(10,),(40,),(100,),(200,),(300,),(400,),(500,),(4,4),(10,10),(100,100),(300,10)]} ],
@@ -79,28 +53,29 @@ def main():
         verbose=True
     )
     
+    #-- Train the model with Grid Search
     clf.fit(X_all, Y_all)
-    
-#    print clf.grid_scores_
-    
+        
+    #-- Show all the parameters in Grid Search
     for params, mean_score, all_scores in clf.grid_scores_:
         print "{:.3f} (+/- {:.3f}) for {}".format(mean_score, all_scores.std() / 2, params)
    
     print ""
     print "Best estimator:"
     print clf.best_estimator_
-    
+
+    #-- Save the best model
     joblib.dump(clf.best_estimator_, './upper_NN_bestmodel')
 
+    
     #-- Reference model
     clf_ref = MLPRegressor(hidden_layer_sizes=(10,),activation='relu',solver="adam",random_state=0,max_iter=20000)
+
+    #-- Train the reference model
     clf_ref.fit(X_all, Y_all)
-    Y_pred_ref = clf_ref.predict(X_all)
+
+    #-- Save the reference model
     joblib.dump(clf_ref, './upper_NN_ref')
-    
-#    plt.style.use('ggplot')
-#    plt.scatter(Y_all,Y_pred)
-#    plt.show()
 
 
 if __name__ == "__main__":
@@ -113,8 +88,8 @@ if __name__ == "__main__":
     Fitting 5 folds for each of 12 candidates, totalling 60 fits
 
 
-    [Parallel(n_jobs=2)]: Done  46 tasks      | elapsed:   10.1s
-    [Parallel(n_jobs=2)]: Done  60 out of  60 | elapsed:   11.4s finished
+    [Parallel(n_jobs=2)]: Done  46 tasks      | elapsed:   11.2s
+    [Parallel(n_jobs=2)]: Done  60 out of  60 | elapsed:   12.8s finished
     /Users/ksakamoto/.pyenv/versions/anaconda2-4.4.0/lib/python2.7/site-packages/sklearn/model_selection/_search.py:667: DeprecationWarning: The grid_scores_ attribute was deprecated in version 0.18 in favor of the more elaborate cv_results_ attribute. The grid_scores_ attribute will not be available from 0.20
       DeprecationWarning)
 
